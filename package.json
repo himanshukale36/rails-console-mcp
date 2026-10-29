@@ -29,12 +29,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR_USERNAME/rails-console-mcp.git"
+    "url": "https://github.com/himanshukale36/rails-console-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/YOUR_USERNAME/rails-console-mcp/issues"
+    "url": "https://github.com/himanshukale36/rails-console-mcp/issues"
   },
-  "homepage": "https://github.com/YOUR_USERNAME/rails-console-mcp#readme",
+  "homepage": "https://github.com/himanshukale36/rails-console-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "zod": "^3.22.4"
