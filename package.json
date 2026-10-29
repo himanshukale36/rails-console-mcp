@@ -1,0 +1,51 @@
+{
+  "name": "rails-console-mcp",
+  "version": "1.0.0",
+  "description": "Generic Rails Console MCP Server - Works with any Rails application",
+  "main": "dist/index.js",
+  "type": "module",
+  "files": [
+    "dist/",
+    "ruby/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "mcp",
+    "rails",
+    "active-record",
+    "model-context-protocol",
+    "ai",
+    "claude",
+    "cursor"
+  ],
+  "author": "Rails Console MCP Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/rails-console-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YOUR_USERNAME/rails-console-mcp/issues"
+  },
+  "homepage": "https://github.com/YOUR_USERNAME/rails-console-mcp#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

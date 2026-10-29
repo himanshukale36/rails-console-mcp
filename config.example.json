@@ -1,0 +1,17 @@
+{
+  "railsAppPath": "/home/himanshu/projects/Transcripto",
+  "environment": "development",
+  "readOnly": true,
+  "maxRows": 100,
+  "queryTimeoutSeconds": 30,
+  "allowedEnvironments": ["development", "test"],
+  "sidecar": {
+    "rubyPath": "ruby",
+    "startupTimeoutSeconds": 30,
+    "logStderr": true
+  },
+  "logging": {
+    "level": "info",
+    "includeTimestamps": true
+  }
+}
