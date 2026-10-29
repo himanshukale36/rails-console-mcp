@@ -36,9 +36,14 @@ jobs:
         run: npm run build
 
       - name: Run tests
-        run: npm test
+        run: |
+          # Check if test files exist before running vitest
+          if find . -name "*.test.ts" -o -name "*.spec.ts" | grep -q .; then
+            npm test
+          else
+            echo "No test files found, skipping tests"
+          fi
         env:
-          # Tests require a Rails app - skip in CI unless configured
           CI: true
 
   lint:
