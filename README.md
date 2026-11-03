@@ -39,6 +39,20 @@ claude mcp list
 
 In Claude Code, use `rails_eval` with `1 + 1` to boot the console. The first call may take a few minutes; later calls reuse the warm process. If Claude Code cannot find the correct Ruby installation, pass its Ruby/Bundler paths with another `-e PATH=...` option when adding the server, or set `RAILS_CONSOLE_MCP_COMMAND` to an app-specific launch command. If `claude mcp list` shows duplicate `rails-console` entries in different scopes, remove the stale one with `claude mcp remove rails-console -s project` or `-s user` as appropriate.
 
+## Install from npm and connect Codex
+
+Register the npm package as a global Codex MCP server, replacing the app path with the absolute path to your Rails app:
+
+```sh
+codex mcp add rails-console \
+  --env RAILS_CONSOLE_MCP_CWD=/absolute/path/to/rails/app \
+  -- npx -y rails-console-mcp
+```
+
+`npx` downloads and runs the package from npm; a separate global install is not required. If you prefer a global install, run `npm install -g rails-console-mcp`, then use `-- rails-console-mcp` in the Codex command above. Check the registration with `codex mcp get rails-console` or `codex mcp list`. Start a new Codex session and call `rails_status` to verify the MCP tool is available; call `rails_eval` with `1 + 1` to boot the Rails console. Codex may ask you to approve MCP tool calls, depending on your approval settings.
+
+If Codex cannot find the correct Ruby installation, add its Ruby/Bundler paths with another `--env PATH=...` option or set `RAILS_CONSOLE_MCP_COMMAND` with `--env` to an app-specific launch command.
+
 ## Tools
 
 - `rails_eval`: evaluate Ruby in the persistent Rails console. Captures `puts` output and the last expression's inspected value. Supports multiline code and heredocs.
