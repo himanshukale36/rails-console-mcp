@@ -1,5 +1,9 @@
 # Rails Console MCP
 
+[![npm version](https://img.shields.io/npm/v/rails-console-mcp)](https://www.npmjs.com/package/rails-console-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/rails-console-mcp)](https://www.npmjs.com/package/rails-console-mcp)
+[![License](https://img.shields.io/npm/l/rails-console-mcp)](LICENSE)
+
 An MCP server that starts a real `bin/rails c` process and keeps it warm for the lifetime of the MCP connection. Calls share the same console session, so Ruby variables and objects remain available across steps:
 
 ```ruby
