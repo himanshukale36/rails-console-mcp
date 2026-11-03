@@ -1,6 +1,6 @@
 {
   "name": "rails-console-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Warm persistent Rails console sessions over MCP",
   "type": "module",
   "bin": {
