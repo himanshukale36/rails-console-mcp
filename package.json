@@ -1,27 +1,27 @@
 {
   "name": "rails-console-mcp",
-  "version": "1.0.0",
-  "description": "JavaScript PostgreSQL MCP server for Rails databases",
-  "main": "dist/index.js",
+  "version": "1.0.1",
+  "description": "Warm persistent Rails console sessions over MCP",
   "type": "module",
   "bin": {
-    "rails-console-mcp": "dist/index.js"
+    "rails-console-mcp": "src/index.js"
   },
   "files": [
-    "dist/",
+    "src/",
+    "scripts/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc",
-    "start": "node dist/index.js",
-    "dev": "tsx watch src/index.ts",
-    "test": "vitest run"
+    "prepack": "npm test",
+    "start": "node src/index.js",
+    "test": "node --test test/*.test.js",
+    "smoke": "node scripts/smoke.js",
+    "postinstall": "node -e \"const fs=require('fs'),p=require('path'),d='node_modules/node-pty/prebuilds';if(fs.existsSync(d))for(const s of fs.readdirSync(d)){const h=p.join(d,s,'spawn-helper');if(fs.existsSync(h)){try{fs.chmodSync(h,0o755)}catch{}}}\""
   },
   "keywords": [
     "mcp",
     "rails",
-    "active-record",
     "model-context-protocol",
     "ai",
     "claude",
@@ -31,7 +31,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/himanshukale36/rails-console-mcp.git"
+    "url": "git+https://github.com/himanshukale36/rails-console-mcp.git"
   },
   "bugs": {
     "url": "https://github.com/himanshukale36/rails-console-mcp/issues"
@@ -39,15 +39,7 @@
   "homepage": "https://github.com/himanshukale36/rails-console-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "pg": "^8.23.1",
-    "zod": "^3.22.4"
-  },
-  "devDependencies": {
-    "@types/node": "^20.10.0",
-    "@types/pg": "^8.23.1",
-    "tsx": "^4.7.0",
-    "typescript": "^5.3.0",
-    "vitest": "^1.0.0"
+    "node-pty": "^1.1.0"
   },
   "engines": {
     "node": ">=18.0.0"

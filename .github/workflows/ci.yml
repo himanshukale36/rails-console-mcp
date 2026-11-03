@@ -20,29 +20,11 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.2"
-          bundler-cache: false
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
-        run: npx tsc --noEmit
-
-      - name: Build
-        run: npm run build
-
       - name: Run tests
-        run: |
-          # Check if test files exist before running vitest
-          if find . -name "*.test.ts" -o -name "*.spec.ts" | grep -q .; then
-            npm test
-          else
-            echo "No test files found, skipping tests"
-          fi
+        run: npm test
         env:
           CI: true
 
@@ -70,7 +52,6 @@ jobs:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
       - run: npm ci
-      - run: npm run build
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
