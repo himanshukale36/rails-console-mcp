@@ -53,6 +53,28 @@ codex mcp add rails-console \
 
 If Codex cannot find the correct Ruby installation, add its Ruby/Bundler paths with another `--env PATH=...` option or set `RAILS_CONSOLE_MCP_COMMAND` with `--env` to an app-specific launch command.
 
+## Install from npm and connect Cursor
+
+For project-specific setup, create `.cursor/mcp.json` in your Rails app and replace the example path with the app's absolute path:
+
+```json
+{
+  "mcpServers": {
+    "rails-console": {
+      "command": "npx",
+      "args": ["-y", "rails-console-mcp"],
+      "env": {
+        "RAILS_CONSOLE_MCP_CWD": "/absolute/path/to/rails/app"
+      }
+    }
+  }
+}
+```
+
+Cursor downloads and runs the package from npm through `npx`; a separate global install is not required. If you prefer a global install, set `"command": "rails-console-mcp"` and `"args": []` after running `npm install -g rails-console-mcp`. Restart or reload the project in Cursor, then open **Settings → Tools & MCP** and check that `rails-console` is enabled. Ask Cursor to call `rails_status` to verify it can use the tool, then call `rails_eval` with `1 + 1` to boot Rails. For more details, see [Cursor's MCP documentation](https://docs.cursor.com/context/model-context-protocol).
+
+If Cursor cannot find the correct Ruby installation, add a `PATH` entry under `env` with the Ruby/Bundler paths, or set `RAILS_CONSOLE_MCP_COMMAND` there to an app-specific launch command.
+
 ## Tools
 
 - `rails_eval`: evaluate Ruby in the persistent Rails console. Captures `puts` output and the last expression's inspected value. Supports multiline code and heredocs.
