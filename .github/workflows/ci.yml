@@ -1,4 +1,4 @@
-name: CI
+name: CI and npm publish
 
 on:
   push:
@@ -43,15 +43,37 @@ jobs:
 
   publish:
     needs: [build-and-test, lint]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    concurrency:
+      group: npm-publish-main
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+      - name: Install npm with trusted publishing support
+        run: npm install --global npm@11.5.1
       - run: npm ci
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm test
+      - name: Bump patch version and publish
+        id: release
+        run: |
+          current_version="$(npm view rails-console-mcp version)"
+          next_version="$(node -e 'const [major, minor, patch] = process.argv[1].split(".").map(Number); console.log(`${major}.${minor}.${patch + 1}`)' "$current_version")"
+          npm version "$next_version" --no-git-tag-version
+          npm publish --access public
+          echo "version=$next_version" >> "$GITHUB_OUTPUT"
+      - name: Commit published version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore: bump npm version to ${{ steps.release.outputs.version }}"
+          git push origin HEAD:main

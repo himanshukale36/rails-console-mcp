@@ -134,6 +134,23 @@ const TOOLS = [
     },
   },
   {
+    name: 'rails_model_details',
+    description:
+      'Inspect one ActiveRecord model by constant name. Returns associations, detectable named scopes, and directly defined class and instance methods with visibility, parameters, and source locations. ' +
+      'Rails does not expose a stable public API for enumerating named scopes, so scope detection uses Rails method source locations when no `defined_scopes` API is available. ' +
+      'Requires a booted console; call rails_eval first (e.g. `1+1`).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        model: {
+          type: 'string',
+          description: 'ActiveRecord model constant name, including namespaces if needed (e.g. "User" or "Billing::Invoice").',
+        },
+      },
+      required: ['model'],
+    },
+  },
+  {
     name: 'rails_status',
     description:
       'Report whether the underlying rails console is running, booting, or ready, plus pid, queue depth, and the last boot error if startup failed.',
@@ -312,6 +329,73 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           truncated: _truncated,
           models: _out
         }
+      `);
+      const output = await console_.evalCode(ruby, { timeoutMs: 120_000 });
+      return textResult(extractJson(output) || '(no output)');
+    }
+    if (name === 'rails_model_details') {
+      if (typeof args.model !== 'string' || !args.model.trim()) {
+        return textResult('Error: `model` is required and must be a non-empty ActiveRecord constant name.', true);
+      }
+      if (!console_.isReady()) return notBootedResult('rails_model_details');
+      const model = rubyLiteralString(args.model.trim());
+      const ruby = buildJsonRuby(`
+        _name = ${model}
+        _klass = _name.safe_constantize
+        _is_ar = (_klass.is_a?(Class) && _klass <= ActiveRecord::Base) rescue false
+        unless _is_ar
+          { error: "ActiveRecord model not found", model: _name }
+        else
+          _method_details = ->(names, lookup, visibility) {
+            names.map { |method_name|
+              _method = lookup.call(method_name)
+              _source = _method.source_location
+              {
+                name: method_name.to_s,
+                visibility: visibility,
+                owner: (_method.owner.name unless _method.owner.name.to_s.empty?),
+                parameters: _method.parameters.map { |kind, parameter_name| { kind: kind.to_s, name: parameter_name&.to_s } },
+                source_file: _source && _source[0],
+                source_line: _source && _source[1]
+              }
+            }
+          }
+          _class = _klass.singleton_class
+          _class_methods = []
+          { public: _class.public_instance_methods(false), protected: _class.protected_instance_methods(false), private: _class.private_instance_methods(false) }.each do |visibility, names|
+            _class_methods.concat(_method_details.call(names, ->(n) { _klass.method(n) }, visibility.to_s))
+          end
+          _instance_methods = []
+          { public: _klass.public_instance_methods(false), protected: _klass.protected_instance_methods(false), private: _klass.private_instance_methods(false) }.each do |visibility, names|
+            _instance_methods.concat(_method_details.call(names, ->(n) { _klass.instance_method(n) }, visibility.to_s))
+          end
+          _scopes = if _klass.respond_to?(:defined_scopes)
+            { names: Array(_klass.defined_scopes).map(&:to_s).uniq.sort, detection: "defined_scopes" }
+          else
+            _scope_names = _class_methods.filter_map do |method|
+              _source = method[:source_file].to_s
+              method[:name] if _source.match?(%r{/active_record/scoping/named\\.rb$})
+            end.uniq.sort
+            { names: _scope_names, detection: "ActiveRecord named-scope source location; custom dynamic scopes may not be listed" }
+          end
+          _associations = _klass.reflect_on_all_associations.map { |association|
+            {
+              name: association.name.to_s,
+              kind: association.macro.to_s,
+              class_name: (association.class_name rescue nil),
+              foreign_key: (Array(association.foreign_key).map(&:to_s) rescue nil),
+              through: (association.options[:through].to_s if association.options[:through])
+            }.compact
+          }
+          {
+            model: _klass.name,
+            table: (_klass.table_name rescue nil),
+            associations: _associations,
+            scopes: _scopes,
+            class_methods: _class_methods.uniq { |method| method[:name] }.sort_by { |method| method[:name] },
+            instance_methods: _instance_methods.uniq { |method| method[:name] }.sort_by { |method| method[:name] }
+          }
+        end
       `);
       const output = await console_.evalCode(ruby, { timeoutMs: 120_000 });
       return textResult(extractJson(output) || '(no output)');

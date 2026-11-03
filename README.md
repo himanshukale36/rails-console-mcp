@@ -79,12 +79,17 @@ Cursor downloads and runs the package from npm through `npx`; a separate global 
 
 If Cursor cannot find the correct Ruby installation, add a `PATH` entry under `env` with the Ruby/Bundler paths, or set `RAILS_CONSOLE_MCP_COMMAND` there to an app-specific launch command.
 
+## Automated npm publishing
+
+Every push to `main` runs the tests, increments the patch version from the latest npm release, publishes it, and commits the new version in `package.json` and `package-lock.json` back to `main`. Before the first publish, configure npm trusted publishing for the `himanshukale36/rails-console-mcp` repository and the `ci.yml` workflow, with direct `npm publish` allowed. See [npm's trusted publishing setup](https://docs.npmjs.com/trusted-publishers/).
+
 ## Tools
 
 - `rails_eval`: evaluate Ruby in the persistent Rails console. Captures `puts` output and the last expression's inspected value. Supports multiline code and heredocs.
 - `rails_tables`: list database tables with optional regex filtering.
 - `rails_schema`: inspect a table's columns, indexes, primary key, and foreign keys.
 - `rails_models`: find model classes and their associations.
+- `rails_model_details`: inspect one model's associations, detectable named scopes, and directly defined class and instance methods, including visibility, parameters, and source locations. Rails does not provide a stable public API to enumerate scopes, so dynamic scopes may not be listed.
 - `rails_status`: inspect console state and startup configuration.
 - `rails_reload`: reload app code in the warm console.
 - `rails_restart`: restart the underlying Rails console.
