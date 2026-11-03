@@ -37,4 +37,4 @@ coverage/
 .env
 .env.local
 
-# Keep only dist/, ruby/, package.json, README.md, LICENSE in published package
+# JavaScript-only distribution; Rails/Ruby source is not shipped.

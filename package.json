@@ -1,17 +1,19 @@
 {
   "name": "rails-console-mcp",
   "version": "1.0.0",
-  "description": "Generic Rails Console MCP Server - Works with any Rails application",
+  "description": "JavaScript PostgreSQL MCP server for Rails databases",
   "main": "dist/index.js",
   "type": "module",
+  "bin": {
+    "rails-console-mcp": "dist/index.js"
+  },
   "files": [
     "dist/",
-    "ruby/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "test": "vitest run"
@@ -37,10 +39,12 @@
   "homepage": "https://github.com/himanshukale36/rails-console-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "pg": "^8.23.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
+    "@types/pg": "^8.23.1",
     "tsx": "^4.7.0",
     "typescript": "^5.3.0",
     "vitest": "^1.0.0"

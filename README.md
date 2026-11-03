@@ -1,184 +1,65 @@
-# Rails Console MCP Server
+# Rails Console MCP
 
-A **generic** Model Context Protocol (MCP) server that provides AI models (Claude Desktop, Cursor, Codex, etc.) with read-only access to **any Rails application's** models, database schema, and data.
+JavaScript-only MCP server for inspecting PostgreSQL databases used by Rails applications. It connects directly to PostgreSQL from Node.js. No Rails checkout, Ruby runtime, Bundler, or sidecar is needed.
 
-## Features
+## Install
 
-- 🔌 **Works with ANY Rails app** - Configure via `config.json`
-- 🛡️ **Read-only by default** - Blocks DDL/DML operations
-- 📊 **8 powerful tools** for model introspection and querying
-- ⚡ **Token efficient** - Returns structured JSON, not verbose text
-- 🔄 **Hot reload** - Reload Rails code without restarting
-- 🔒 **Environment-aware** - Production requires explicit opt-in
-
-## Quick Start
-
-### 1. Install Dependencies
-
-```bash
-cd /home/himanshu/projects/rails-console-mcp
-npm install
-npm run build
+```sh
+npm install -g rails-console-mcp
 ```
 
-### 2. Configure
-
-Copy the example config and edit for your Rails app:
-
-```bash
-cp config.example.json config.json
-# Edit config.json with your Rails app path
-```
+Configure the server with `DATABASE_URL` or a config file:
 
 ```json
 {
-  "railsAppPath": "/home/himanshu/projects/Transcripto",
-  "environment": "development",
-  "readOnly": true,
+  "databaseUrl": "postgresql://readonly_user:password@localhost:5432/rails_app",
+  "databaseSchema": "public",
   "maxRows": 100,
   "queryTimeoutSeconds": 30
 }
 ```
 
-### 3. Configure Your AI Tool
+Use a database role that has SELECT privileges only. The connector also sets PostgreSQL sessions to read-only.
 
-**Claude Desktop** (`~/.claude/claude_desktop_config.json`):
+MCP client example:
+
 ```json
 {
   "mcpServers": {
     "rails-console": {
-      "command": "node",
-      "args": ["/home/himanshu/projects/rails-console-mcp/dist/index.js"]
+      "command": "rails-console-mcp",
+      "args": [],
+      "env": { "DATABASE_URL": "postgresql://readonly_user:password@localhost:5432/rails_app" }
     }
   }
 }
 ```
 
-**Cursor** (`.cursor/mcp.json`):
-```json
-{
-  "mcpServers": {
-    "rails-console": {
-      "command": "node",
-      "args": ["/home/himanshu/projects/rails-console-mcp/dist/index.js"]
-    }
-  }
-}
-```
+## Tools
 
-**VS Code** (`.vscode/mcp.json`):
-```json
-{
-  "servers": {
-    "rails-console": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["/home/himanshu/projects/rails-console-mcp/dist/index.js"]
-    }
-  }
-}
-```
+- `list_tables`: list tables in the configured schema, optionally filtered by regex.
+- `get_table_schema`: inspect columns, indexes, primary keys, and foreign keys.
+- `get_table_count`: count rows in a table.
+- `execute_query`: run one parameterized SELECT query, with a capped result limit.
 
-### 4. Restart Your AI Tool
+This database-only version cannot inspect Rails model code, so it does not report validations, callbacks, scopes, enums, or Ruby-defined associations. Database foreign keys remain available through table metadata.
 
-Restart Claude Desktop / Cursor / VS Code to load the MCP server.
+## Configuration
 
-## Available Tools
+| Setting | Default | Meaning |
+|---|---:|---|
+| `databaseUrl` | `DATABASE_URL` env | PostgreSQL connection URL |
+| `databaseSchema` | `public` | Schema containing Rails tables |
+| `maxRows` | `100` | Maximum rows returned |
+| `queryTimeoutSeconds` | `30` | Connection and statement timeout |
+| `logging.level` | `info` | Log verbosity |
 
-| Tool | Description |
-|------|-------------|
-| `list_models` | List all models with summary metadata (table name, column/association counts) |
-| `get_model_schema` | Full model definition: columns, associations, validations, scopes, enums, callbacks |
-| `get_table_schema` | Raw database table schema (columns, indexes, FKs, PKs) |
-| `execute_query` | Safe read-only SELECT queries with automatic LIMIT |
-| `reload_environment` | Reload Rails code (development only) |
-| `get_model_counts` | Row counts for models with optional WHERE clause |
-| `search_models` | Find models by name/table pattern (regex) |
-| `get_associations_graph` | Graph of model relationships (nodes/edges) |
-
-## Architecture
-
-```
-┌─────────────────────┐     stdio (JSON-RPC)     ┌──────────────────────┐
-│  AI Tool            │ ◄──────────────────────► │  Node.js MCP Server  │
-│  (Claude, Cursor)   │                          │  @modelcontextprotocol│
-└─────────────────────┘                          └──────────┬───────────┘
-                                                             │
-                                                    spawns Ruby sidecar
-                                                             │
-                                                             ▼
-                                                 ┌──────────────────────┐
-                                                 │  Ruby Sidecar        │
-                                                 │  (loads Rails env)   │
-                                                 │  - ActiveRecord      │
-                                                 │  - All model metadata│
-                                                 └──────────┬───────────┘
-                                                            │
-                                                            ▼
-                                                 ┌──────────────────────┐
-                                                 │  Rails App           │
-                                                 │  (any path)          │
-                                                 │  config.railsAppPath │
-                                                 └──────────────────────┘
-```
-
-The **Ruby sidecar** loads the full Rails environment (`config/environment.rb`) giving access to:
-- All ActiveRecord models with associations, scopes, validations, callbacks, enums
-- Database schema via `ActiveRecord::Base.connection`
-- Safe query execution through ActiveRecord
-
-## Configuration Reference
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `railsAppPath` | string | **required** | Absolute path to Rails app root |
-| `environment` | string | `"development"` | Rails env to load |
-| `readOnly` | boolean | `true` | Block DDL/DML operations |
-| `maxRows` | number | `100` | Max rows per query |
-| `queryTimeoutSeconds` | number | `30` | Query timeout |
-| `allowedEnvironments` | string[] | `["development","test"]` | Allowed Rails envs |
-| `sidecar.rubyPath` | string | `"ruby"` | Ruby executable path |
-| `sidecar.startupTimeoutSeconds` | number | `30` | Sidecar startup timeout |
-| `logging.level` | string | `"info"` | Log level |
-
-## Security
-
-- **Read-only by default** - Only SELECT queries allowed
-- **Production protection** - Requires explicit `allowedEnvironments` config
-- **Query validation** - Blocks DDL/DML keywords
-- **Parameterized queries** - Use `params` array for safe interpolation
-- **Row limits** - Automatic LIMIT enforcement
+Provide config using `--config /path/to/config.json`, `RAILS_CONSOLE_MCP_CONFIG`, or `config.json` in the working directory.
 
 ## Development
 
-```bash
-# Watch mode for development
-npm run dev
-
-# Run tests
+```sh
+npm install
+npm run build
 npm test
-
-# Type check
-npx tsc --noEmit
 ```
-
-## Example Usage
-
-Once configured, ask your AI tool:
-
-> "List all models in my Rails app"
-> "Show me the schema for the Transcription model including associations"
-> "How many transcriptions were created this week?"
-> "Show me the association graph for User, Transcription, and Speaker"
-> "Run a query to find all transcriptions with status 'completed'"
-
-## Requirements
-
-- Node.js 18+
-- Ruby 3.0+ (matching your Rails app)
-- Rails 6.0+ (tested with Rails 8)
-- Bundler installed in target Rails app
-
-## License
-
-MIT

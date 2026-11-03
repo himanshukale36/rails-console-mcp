@@ -3,21 +3,20 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadConfig } from "./utils/config.js";
 import { initLogger, getLogger } from "./utils/logger.js";
-import { RubySidecar } from "./connector/ruby-sidecar.js";
+import { PostgresConnector } from "./connector/postgres.js";
 import { registerTools } from "./tools/index.js";
 import { Config } from "./types/config.js";
 
 /**
  * Rails Console MCP Server
- * Generic MCP server that connects to ANY Rails application via Ruby sidecar
+ * JavaScript-only MCP server for PostgreSQL-backed Rails applications
  */
 
 class RailsConsoleMCPServer {
   private server: Server;
-  private sidecar: RubySidecar;
+  private db: PostgresConnector;
   private config: Config;
   private logger = getLogger().child({ component: "MCPServer" });
-  private shutdownHandlers: (() => Promise<void>)[] = [];
 
   constructor(config: Config) {
     this.config = config;
@@ -38,11 +37,10 @@ class RailsConsoleMCPServer {
       }
     );
 
-    // Create Ruby sidecar
-    this.sidecar = new RubySidecar(config);
+    this.db = new PostgresConnector(config);
 
     // Register tools
-    registerTools(this.server, this.sidecar, config);
+    registerTools(this.server, this.db, config);
 
     // Setup shutdown handlers
     this.setupShutdownHandlers();
@@ -52,8 +50,7 @@ class RailsConsoleMCPServer {
     const shutdown = async (signal: string) => {
       this.logger.info(`Received ${signal}, shutting down...`);
 
-      // Stop sidecar
-      await this.sidecar.stop();
+      await this.db.stop();
 
       // Close MCP server
       await this.server.close();
@@ -79,13 +76,10 @@ class RailsConsoleMCPServer {
 
   async start(): Promise<void> {
     this.logger.info("Starting Rails Console MCP Server", {
-      railsAppPath: this.config.railsAppPath,
-      environment: this.config.environment,
-      readOnly: this.config.readOnly,
+      databaseSchema: this.config.databaseSchema,
     });
 
-    // Start Ruby sidecar
-    await this.sidecar.start();
+    await this.db.start();
 
     // Start MCP server with stdio transport
     const transport = new StdioServerTransport();
@@ -111,7 +105,7 @@ async function main(): Promise<void> {
     }
     if (args[i] === "--help" || args[i] === "-h") {
       console.log(`
-Rails Console MCP Server - Generic Rails Model Introspection
+Rails Console MCP Server - PostgreSQL database inspection
 
 Usage:
   rails-console-mcp [options]
@@ -131,9 +125,8 @@ Configuration:
 
 Example config.json:
 {
-  "railsAppPath": "/path/to/your/rails/app",
-  "environment": "development",
-  "readOnly": true,
+  "databaseUrl": "postgresql://user:password@localhost:5432/rails_app",
+  "databaseSchema": "public",
   "maxRows": 100,
   "queryTimeoutSeconds": 30
 }

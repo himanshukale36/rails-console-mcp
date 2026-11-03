@@ -1,15 +1,8 @@
 {
-  "railsAppPath": "/home/himanshu/projects/Transcripto",
-  "environment": "development",
-  "readOnly": true,
+  "databaseUrl": "postgresql://user:password@localhost:5432/rails_app",
+  "databaseSchema": "public",
   "maxRows": 100,
   "queryTimeoutSeconds": 30,
-  "allowedEnvironments": ["development", "test"],
-  "sidecar": {
-    "rubyPath": "ruby",
-    "startupTimeoutSeconds": 30,
-    "logStderr": true
-  },
   "logging": {
     "level": "info",
     "includeTimestamps": true
