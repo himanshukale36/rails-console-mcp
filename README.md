@@ -19,24 +19,25 @@ The MCP server and package are JavaScript. It uses `node-pty` to run the Rails a
 - A Rails app with `bin/rails c` runnable from its root
 - The app's Ruby/Bundler toolchain available to the MCP process
 
-## Install and connect Claude Code
+## Install from npm and connect Claude Code
 
-After installing the published package:
+With Node.js 18 or newer and npm installed, register the published package as a Claude Code MCP server. Replace the app path with the absolute path to your Rails app:
 
 ```sh
-npm install -g rails-console-mcp
 claude mcp add -s user rails-console \
   -e RAILS_CONSOLE_MCP_CWD=/absolute/path/to/rails/app \
-  -- rails-console-mcp
+  -- npx -y rails-console-mcp
 ```
 
-Check the server and start a console session:
+`npx` downloads and runs the package from npm; a separate global install is not required. If you prefer a global install, run `npm install -g rails-console-mcp`, then use `-- rails-console-mcp` in the Claude command above.
+
+Check that Claude Code can start the server:
 
 ```sh
 claude mcp list
 ```
 
-Use `rails_eval` with `1 + 1` to boot the console. The first call may take a few minutes; later calls reuse the warm process. If Claude Code cannot find the correct Ruby installation, put its Ruby/Bundler paths in `PATH` or set `RAILS_CONSOLE_MCP_COMMAND` to an app-specific launch command.
+In Claude Code, use `rails_eval` with `1 + 1` to boot the console. The first call may take a few minutes; later calls reuse the warm process. If Claude Code cannot find the correct Ruby installation, pass its Ruby/Bundler paths with another `-e PATH=...` option when adding the server, or set `RAILS_CONSOLE_MCP_COMMAND` to an app-specific launch command. If `claude mcp list` shows duplicate `rails-console` entries in different scopes, remove the stale one with `claude mcp remove rails-console -s project` or `-s user` as appropriate.
 
 ## Tools
 
